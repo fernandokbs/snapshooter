@@ -37,9 +37,11 @@ class BackupService:
             job_id = job['id']
             job_name = job['name']
             job_url = f'{self.BASE_URL}/jobs/{job_id}/backups/start'
-            print(f'Running backup for {job_name} with id: {job_id}')
 
             response = requests.post(job_url, headers=self._headers(), data=self._data_binary())
+            backup_data = response.json()
+            backup_id = backup_data['backup_id']
+            print(f'Running backup for {job_name} with id: {job_id}: backup id: {backup_id}')
 
     def test_backup(self):
         url = f'{self.BASE_URL}/jobs/{self.job_id}/backups/start'
