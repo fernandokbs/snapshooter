@@ -5,9 +5,12 @@ env_config = dotenv_values('.env')
 
 class BackupService:
     BASE_URL = 'https://api.snapshooter.com/v1'
+    BASE_DESTINATION_PATH = '/home/fernando/snapshooter'
 
     def __init__(self):
         self.token = env_config.get('SNAPSHOOTER_TOKEN')
+        self.backup_id = "4a3ec18c-337a-4762-893e-47189598dbd1"
+        self.job_id = "f11dbfc0-21e2-48ea-9987-d5192daede3d"
 
         if not self.token:
             raise Exception("Key not found")
@@ -30,34 +33,45 @@ class BackupService:
     def run_backups(self):
         job_ids = self.jobs()
 
-
         for job in job_ids:
             job_id = job['id']
             print(f'{self.BASE_URL}/jobs/{job_id}/backups/start')
 
     def test_backup(self):
-        job_id = "f11dbfc0-21e2-48ea-9987-d5192daede3d"
-        url = f'{self.BASE_URL}/jobs/{job_id}/backups/start'
+        url = f'{self.BASE_URL}/jobs/{self.job_id}/backups/start'
 
-        data_binary = """
-        {
-        "is_manual": true,
-        "is_hourly": false,
-        "is_daily": false,
-        "is_weekly": false,
-        "is_monthly": false
-        }
-        """
-        response = requests.post(url, headers=self._headers(), data=data_binary)
+        response = requests.post(url, headers=self._headers(), data=self._data_binary())
         backup_data = response.json()
 
         print(backup_data)
 
-    def download_backups(self):
-        pass
+    def backup_status(self):
+        response = requests.get(f'{self.BASE_URL}/backups/{self.backup_id}', headers=self._headers())
+        json_data = response.json()
+        print(json_data)
+
+    def download_backup(self):
+        response = requests.post(f'{self.BASE_URL}/backups/{self.backup_id}/download', headers=self._headers())
+        json_data = response.json()
+
+        for key, value in json_data['data'].items():
+            file_name = key.split('/')[-1]
+            print(f"Key: {file_name}, Value: {value}")
+            self._download_file(f'{self.BASE_DESTINATION_PATH}r/{file_name}', value)
 
     def call(self):
-        self.test_backup()
+        self.download_backup()
+
+    def _download_file(self, file_destination_path, url_file):
+        with requests.get(url_file, stream=True)  as response:
+            response.raise_for_status()
+
+            with open(file_destination_path, 'wb') as file:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        file.write(chunk)
+
+        return url_file
 
     def _headers(self):
         return {
@@ -66,10 +80,21 @@ class BackupService:
             "Authorization": f'Bearer {self.token}'
         }
 
+    def _data_binary(self):
+        return """
+        {
+        "is_manual": true,
+        "is_hourly": false,
+        "is_daily": false,
+        "is_weekly": false,
+        "is_monthly": false
+        }
+        """
+
     @classmethod
     def run(cls):
         (BackupService()).call()
 
-backup_service = BackupService()
 
-backup_service.run()
+if __name__ == '__main__':
+    BackupService.run()
