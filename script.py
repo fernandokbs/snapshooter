@@ -3,8 +3,6 @@ import requests
 
 env_config = dotenv_values('.env')
 
-print(env_config.get('SNAPSHOOTER_TOKEN'))
-
 class BackupService:
     BASE_URL = 'https://api.snapshooter.com/v1'
 
@@ -51,6 +49,9 @@ class BackupService:
         }
         """
         response = requests.post(url, headers=self._headers(), data=data_binary)
+        backup_data = response.json()
+
+        print(backup_data)
 
     def download_backups(self):
         pass
