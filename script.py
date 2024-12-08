@@ -5,7 +5,7 @@ env_config = dotenv_values('.env')
 
 class BackupService:
     BASE_URL = 'https://api.snapshooter.com/v1'
-    BASE_DESTINATION_PATH = '/home/fernando/snapshooter'
+    BASE_DESTINATION_PATH = '/home/fernando/snapshooter/backups'
 
     def __init__(self):
         self.token = env_config.get('SNAPSHOOTER_TOKEN')
@@ -22,10 +22,13 @@ class BackupService:
 
         if response.status_code == 200:
             for job in jobs_data['data']:
+                server_name = job['compute']['name']
                 job_ids.append({
                     'id': job['id'],
-                    'name': job['name']
+                    'name': job['name'],
+                    'server_name': server_name,
                 })
+
             return job_ids
         else:
             raise Exception(f"Failed to fetch data: {response.status_code}")
@@ -36,19 +39,19 @@ class BackupService:
         for job in job_ids:
             job_id = job['id']
             job_name = job['name']
+            job_server_name = job['server_name']
 
             response = requests.get(f'{self.BASE_URL}/jobs/{job_id}/backups', headers=self._headers())
-            backup_data = response.json()
-            backup_data = backup_data['data']
+            backup_data = response.json()['data']
             lastest_backup_data = backup_data[0]
             backup_id = lastest_backup_data['id']
             backup_files = lastest_backup_data['files']
             backup_ids.append({
                 'id': backup_id,
+                'name': job_name,
+                'server_name': job_server_name,
                 'files': backup_files
             })
-            backup_ids.append(lastest_backup_data['id'])
-            # print(f'Lastest backup id: {lastest_backup_data}:')
 
         return backup_ids
 
@@ -67,18 +70,24 @@ class BackupService:
 
     def download_backups(self):
         backup_ids = self.backup_ids()
-        print(f'Backup IDS {backup_ids}')
-        return False
-        response = requests.post(f'{self.BASE_URL}/backups/{self.backup_id}/download', headers=self._headers())
-        json_data = response.json()
 
-        for key, value in json_data['data'].items():
-            file_name = key.split('/')[-1]
-            print(f"Key: {file_name}, Value: {value}")
-            self._download_file(f'{self.BASE_DESTINATION_PATH}r/{file_name}', value)
+        for backup in backup_ids:
+            if isinstance(backup, list) or isinstance(backup, dict):
+                server_name = backup['server_name']
+                print(f'Backup for: {server_name}')
+
+                for file in backup['files']:
+                    file_name = file['name']
+                    file_name = file_name.split('/')[-1]
+                    if "storage" in file_name:
+                        file_name = f'{server_name}_storage'
+
+                    file_url = file['url']
+                    self._download_file(f'{self.BASE_DESTINATION_PATH}/{file_name}', file_url)
 
     def call(self):
         self.download_backups()
+        # self.job_ids()
 
     def _download_file(self, file_destination_path, url_file):
         with requests.get(url_file, stream=True)  as response:
