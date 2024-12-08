@@ -30,6 +30,28 @@ class BackupService:
         else:
             raise Exception(f"Failed to fetch data: {response.status_code}")
 
+    def backup_ids(self):
+        job_ids = self.job_ids()
+        backup_ids = []
+        for job in job_ids:
+            job_id = job['id']
+            job_name = job['name']
+
+            response = requests.get(f'{self.BASE_URL}/jobs/{job_id}/backups', headers=self._headers())
+            backup_data = response.json()
+            backup_data = backup_data['data']
+            lastest_backup_data = backup_data[0]
+            backup_id = lastest_backup_data['id']
+            backup_files = lastest_backup_data['files']
+            backup_ids.append({
+                'id': backup_id,
+                'files': backup_files
+            })
+            backup_ids.append(lastest_backup_data['id'])
+            # print(f'Lastest backup id: {lastest_backup_data}:')
+
+        return backup_ids
+
     def run_backups(self):
         job_ids = self.job_ids()
 
@@ -43,20 +65,10 @@ class BackupService:
             backup_id = backup_data['backup_id']
             print(f'Running backup for {job_name} with id: {job_id}: backup id: {backup_id}')
 
-    def test_backup(self):
-        url = f'{self.BASE_URL}/jobs/{self.job_id}/backups/start'
-
-        response = requests.post(url, headers=self._headers(), data=self._data_binary())
-        backup_data = response.json()
-
-        print(backup_data)
-
-    def backup_status(self):
-        response = requests.get(f'{self.BASE_URL}/backups/{self.backup_id}', headers=self._headers())
-        json_data = response.json()
-        print(json_data)
-
-    def download_backup(self):
+    def download_backups(self):
+        backup_ids = self.backup_ids()
+        print(f'Backup IDS {backup_ids}')
+        return False
         response = requests.post(f'{self.BASE_URL}/backups/{self.backup_id}/download', headers=self._headers())
         json_data = response.json()
 
@@ -66,7 +78,7 @@ class BackupService:
             self._download_file(f'{self.BASE_DESTINATION_PATH}r/{file_name}', value)
 
     def call(self):
-        self.run_backups()
+        self.download_backups()
 
     def _download_file(self, file_destination_path, url_file):
         with requests.get(url_file, stream=True)  as response:
