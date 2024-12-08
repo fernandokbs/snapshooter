@@ -1,5 +1,6 @@
 from dotenv import dotenv_values, set_key
 import requests
+import sys
 
 env_config = dotenv_values('.env')
 
@@ -9,8 +10,6 @@ class BackupService:
 
     def __init__(self):
         self.token = env_config.get('SNAPSHOOTER_TOKEN')
-        self.backup_id = "4a3ec18c-337a-4762-893e-47189598dbd1"
-        self.job_id = "f11dbfc0-21e2-48ea-9987-d5192daede3d"
 
         if not self.token:
             raise Exception("Key not found")
@@ -122,6 +121,16 @@ class BackupService:
     def run(cls):
         (BackupService()).call()
 
-
 if __name__ == '__main__':
-    BackupService.run()
+    backup_service = BackupService()
+
+    if len(sys.argv) > 1:
+        parameter = sys.argv[1]
+        if 'backup' in parameter:
+            print("Ejecutando backup")
+            backup_service.run_backups()
+        if 'download' in parameter:
+            print("Descargando archivos!")
+            backup_service.download_backups()
+    else:
+        print("Se requiere parametro.")

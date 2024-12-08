@@ -10,7 +10,12 @@ cp .env.example .env
 pip install -r requirements.txt
 ```
 
-#### Run script
+#### Run script to trigger backups
 ```bash
-python3 script.py
+python3 script.py backup
+```
+
+#### Run script to download backups
+```bash
+python3 script.py download
 ```
