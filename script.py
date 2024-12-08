@@ -6,7 +6,7 @@ env_config = dotenv_values('.env')
 
 class BackupService:
     BASE_URL = 'https://api.snapshooter.com/v1'
-    BASE_DESTINATION_PATH = '/home/fernando/snapshooter/backups'
+    BASE_DESTINATION_PATH = env_config.get('BASE_DESTINATION_PATH')
 
     def __init__(self):
         self.token = env_config.get('SNAPSHOOTER_TOKEN')
@@ -84,10 +84,6 @@ class BackupService:
                     file_url = file['url']
                     self._download_file(f'{self.BASE_DESTINATION_PATH}/{file_name}', file_url)
 
-    def call(self):
-        self.download_backups()
-        # self.job_ids()
-
     def _download_file(self, file_destination_path, url_file):
         with requests.get(url_file, stream=True)  as response:
             response.raise_for_status()
@@ -116,6 +112,9 @@ class BackupService:
         "is_monthly": false
         }
         """
+
+    def call(self):
+        self.download_backups()
 
     @classmethod
     def run(cls):
