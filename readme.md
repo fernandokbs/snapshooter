@@ -1,4 +1,6 @@
-# How to use
+### Script to trigger and download backups from https://snapshooter.com/
+
+## How to use
 
 #### Copy .env
 ```bash
