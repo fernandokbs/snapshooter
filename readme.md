@@ -7,9 +7,16 @@
 cp .env.example .env
 ```
 
+#### Create virtual env
+
+```
+python3 -m venv env
+source env/bin/activate
+```
+
 #### Install dependencies
 ```bash
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 #### Run script to trigger backups
