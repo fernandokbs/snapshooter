@@ -7,6 +7,11 @@
 cp .env.example .env
 ```
 
+### Conver token to base64
+```bash
+echo "token" | base64
+```
+
 #### Create virtual env
 
 ```

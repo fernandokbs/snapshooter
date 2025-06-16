@@ -1,4 +1,5 @@
 from dotenv import dotenv_values, set_key
+import base64
 import requests
 import sys
 
@@ -11,8 +12,10 @@ class BackupService:
     def __init__(self):
         self.token = env_config.get('SNAPSHOOTER_TOKEN')
 
-        if not self.token:
-            raise Exception("Key not found")
+        if self.token:
+            self.token = base64.b64decode(self.token).decode('utf-8').strip()
+        else:
+            raise Exception("TOKEN not found!")
 
     def job_ids(self):
         response = requests.get(f'{self.BASE_URL}/jobs', headers=self._headers())
